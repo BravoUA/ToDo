@@ -1,0 +1,294 @@
+﻿@{
+    Layout = null;
+}
+@model List<ToDoTask>;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="todo-container-form" class="container">
+        <h2 class="mb-4">Add Task </h2>
+
+        <div class="add-todo mt-4">
+            <label for="Task_Name" class="form-label">Task Name</label>
+            <div class="input-group mb-3">
+
+                <input type="text" id="Task_Name" class="form-control" placeholder="Add a new task">
+            </div>
+            <label for="Task_Description" class="form-label">Task Description</label>
+
+            <div class="input-group mb-3">
+                <textarea class="form-control" id="Task_Description" aria-label="Task_Description" placeholder="Add a new Task Description"></textarea>
+            </div>
+            <label for="Task_Type" class="form-label">Select a Task Type</label>
+
+            <div class="input-group mb-3">
+                <select class="form-select" id="Task_Type">
+                    <option value="1">Priority</option>
+                    <option value="2">Normal</option>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <a href="#" onClick="AddTask()" class="btn btn-success">Add</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="todo-container" class="container">
+        <h2 class="mb-4">ToDo List </h2>
+        <div class="input-group mb-3">
+            <a href="#" onclick="SHOWFORM()" id="SHOWF" class="btn btn-success">Add Task</a>
+            <input type="text" class="form-control-sm" id="SearchName" onchange="SearchTask()" placeholder="Search Task Name">
+            <select class="form-select" id="SearchType_Task" onchange="SearchType()">
+                <option >All</option>
+                <option value="Priority">Priority</option>
+                <option value="Normal">Normal</option>
+            </select>
+            <select class="form-select" id="SearchStatus_Type" onchange="SearchStatus()">
+                <option >All</option>
+                <option value="DONE">Done</option>
+                <option value="NOT READY">Not Ready</option>
+            </select>
+        </div>
+
+
+        <div class="list-group">
+            @{
+                if (Model.Count > 0)
+                {
+                    for (int i = 0; i < Model.Count; i++)
+                    {
+                                                <div id="@Model[i].id"  class="list-group-item list-group-item flex-column align-items-start show">
+
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h5 class="mb-1">@Model[i].Task_Name</h5>
+                                                        
+
+                                                        @if (Model[i].Task_Type == 1)
+                                {
+                                                            <small class="TYPE" style="color:red">Priority</small>
+                                }
+                                                        @if (Model[i].Task_Type == 2)
+                                {
+                                                    <small class="TYPE" style="color:Green">Normal</small>
+                                }
+
+
+                                                    </div>
+                                                    <p class="mb-1"> @Model[i].Task_Description </p>
+
+                                            @if (Model[i].Task_Status)
+                            {
+                                                <h5><small class="State">DONE</small></h5>
+                            }
+                            else
+                            {
+                                                <h5><small class="State">NOT READY</small></h5>
+                            }
+                                                    <div id="showED" >
+                                                        <p><a href="#" onclick="EditeNameTask('@Model[i].id')" style="text-decoration:none;" class="btn btn-warning">Edit Task Name</a></p>
+                                                        <p><a href="#" onclick="showConfirm('@Model[i].id')" style="text-decoration:none;" class="btn btn-danger">Delete Task</a></p>
+                                                         <div class="form-check form-switch">
+                                                        <p><label for="Checkbox2_@Model[i].id" class="form-label">Edite Task State</label><input class="form-check-input" type="checkbox" id="Checkbox2_@Model[i].id" name="Checkbox2_@Model[i].id" value="@Model[i].id" @(Model[i].Task_Status == true ? "checked" : "") onchange="checkboxChanged(this)"></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                    }
+
+                }
+            }
+
+        </div>
+    </div>
+
+        
+
+    
+
+   <script>
+       function show(id) {
+            var todoContainerForm = document.getElementById('show=' + id);
+            todoContainerForm.style.display = (todoContainerForm.style.display === 'none' || todoContainerForm.style.display === '') ? 'block' : 'none';
+        }
+       function SHOWFORM() {
+            var todoContainerForm = document.getElementById('todo-container-form');
+            todoContainerForm.style.display = (todoContainerForm.style.display === 'none' || todoContainerForm.style.display === '') ? 'block' : 'none';
+        }
+       function AddTask() {
+            var Task_Name = document.getElementById('Task_Name').value;
+            var Task_Description = document.getElementById('Task_Description').value;
+            var Task_Type = document.getElementById('Task_Type').value;
+
+            $.ajax({
+                url: '/Home/Index',
+                type: 'POST',
+                data: {
+                    Task_Name: Task_Name,
+                    Task_Description: Task_Description,
+                    Task_Type: Task_Type
+                },
+                success: function (response) {
+
+                    console.log("Запит успішно відправлено.");
+                    location.reload();
+
+                },
+                error: function (error) {
+
+                    console.error("Сталася помилка під час відправлення запиту:", error);
+                }
+            });
+        }
+       function checkboxChanged(checkbox) {
+           if (checkbox.checked) {
+               var result = confirm("Ви хочете змінити статус виконання задачі");
+               if (result) {
+                   var isChecked = checkbox.checked;
+                    var TaskId = checkbox.value;
+
+                    fetch('/Home/EnableTask', {
+                       method: 'POST',
+                       headers: {
+                           'Content-Type': 'application/json',
+                       },
+                       body: JSON.stringify({ TaskId: TaskId, checked: isChecked })
+                   })
+                       .then(response => {
+                           if (response.ok) {
+                               console.log("POST request was successful");
+                               location.reload();
+                           } else {
+
+                               console.error("Error during POST request");
+                                location.reload();
+                           }
+                       })
+                       .catch(error => {
+                           console.error("Error:", error);
+                       });
+               } else { checkbox.checked = false; }
+           }
+           else {
+               var result = confirm("Ви хочете змінити статус виконання задачі");
+               if (result) {
+                    var isChecked = checkbox.checked;
+                    var TaskId = checkbox.value;
+
+                    fetch('/Home/EnableTask', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ TaskId: TaskId, checked: isChecked })
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                console.log("POST request was successful");
+                                location.reload();
+                            } else {
+
+                                console.error("Error during POST request");
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error:", error);
+                        });
+                } else { checkbox.checked = false; }
+           }
+       }
+       function EditeNameTask(id) {
+            var newTokenAmount = prompt("Введіть нову назву завдання");
+
+            $.ajax({
+                url: '/Home/EditeTaskName?ID=' + id,
+                type: 'POST',
+                data: { NAME: newTokenAmount },
+                success: function (response) {
+
+                    console.log("Запит успішно відправлено.");
+                    location.reload();
+
+                },
+                error: function (error) {
+
+                    console.error("Сталася помилка під час відправлення запиту:", error);
+                    location.reload();
+                }
+            });
+        }
+       function showConfirm(ID) {
+                var result = confirm("Ви хочете Видалити Task = " + ID);
+                if (result) {
+                    $.ajax({
+                        url: '/Home/DeleteTask?ID=' + ID,
+                        type: 'POST',
+                        success: function (response) {
+
+                        console.log("Запит успішно відправлено.");
+                        location.reload();
+
+                          },
+                         error: function (error) {
+
+                        console.error("Сталася помилка під час відправлення запиту:", error);
+                        location.reload();
+                    }
+                    });
+                } 
+            }
+       function SearchTask() {
+            var searchValue = document.getElementById('SearchName').value.toLowerCase();
+            var taskItems = document.getElementsByClassName('list-group-item');
+            for (var i = 0; i < taskItems.length; i++) {
+                var taskName = taskItems[i].getElementsByClassName('mb-1')[0].innerText.toLowerCase();
+                if (taskName.includes(searchValue)) {
+                    taskItems[i].style.display = 'block';
+                } else {
+                    taskItems[i].style.display = 'none';
+                }
+            }
+        }
+       function SearchType() {
+           var searchValue = document.getElementById('SearchType_Task').value;
+           var taskItems = document.getElementsByClassName('list-group-item');
+            if (searchValue == "All") { location.reload(); } else {
+                for (var i = 0; i < taskItems.length; i++) {
+               var taskName = taskItems[i].getElementsByClassName('TYPE')[0].innerText;
+               if (taskName.includes(searchValue)) {
+                   taskItems[i].style.display = 'block';
+               } else {
+                   taskItems[i].style.display = 'none';
+               }
+           }
+
+       }
+        }
+       function SearchStatus() {
+            var searchValue = document.getElementById('SearchStatus_Type').value;
+            var taskItems = document.getElementsByClassName('list-group-item');
+           if (searchValue == "All") { location.reload(); } else {
+               for (var i = 0; i < taskItems.length; i++) {
+                   var taskName = taskItems[i].getElementsByClassName('State')[0].innerText;
+                   if (taskName.includes(searchValue)) {
+                       taskItems[i].style.display = 'block';
+                   } else {
+                       taskItems[i].style.display = 'none';
+                   }
+               }
+           }
+        }
+    </script>
+</body>
+</html>
